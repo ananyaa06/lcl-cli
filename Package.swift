@@ -15,7 +15,7 @@ let package = Package(
         .package(url: "https://github.com/Local-Connectivity-Lab/lcl-auth.git", branch: "main"),
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.81.0"),
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.25.0"),
-        .package(url: "https://github.com/Local-Connectivity-Lab/lcl-speedtest.git", from: "1.0.6"),
+        .package(url: "https://github.com/Local-Connectivity-Lab/lcl-speedtest.git", from: "1.0.7"),
         .package(url: "https://github.com/johnnzhou/ANSITerminal.git", from: "0.0.4"),
     ],
     targets: [
