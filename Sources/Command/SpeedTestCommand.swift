@@ -49,7 +49,7 @@ extension LCLCLI {
             stopSignal.setEventHandler {
                 print("Exit from Speedtest")
                 speedTest.stop()
-                return
+                LCLCLI.SpeedTestCommand.exit()
             }
 
             stopSignal.resume()
@@ -81,7 +81,7 @@ extension LCLCLI {
     }
 }
 
-extension TestType: ExpressibleByArgument {
+extension TestType: @retroactive ExpressibleByArgument {
     public init?(argument: String) {
         self = TestType(rawValue: argument) ?? .download
     }

@@ -184,7 +184,7 @@ extension LCLCLI {
             stopSignal.setEventHandler {
                 print("Exit from ICMP Ping Test.")
                 client.cancel()
-                return
+                LCLCLI.PingCommand.exit()
             }
 
             stopSignal.resume()
@@ -196,7 +196,7 @@ extension LCLCLI {
     }
 }
 
-extension LCLPing.PingType: ExpressibleByArgument {
+extension LCLPing.PingType: @retroactive ExpressibleByArgument {
     public init?(argument: String) {
         switch argument {
         case "icmp":

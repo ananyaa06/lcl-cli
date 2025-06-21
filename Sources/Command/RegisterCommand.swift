@@ -59,7 +59,7 @@ extension LCLCLI {
                         shouldExit = true
                     case "n":
                         print("Registration cancelled.")
-                        return
+                        LCLCLI.RegisterCommand.exit()
                     default:
                         ()
                     }
@@ -86,6 +86,12 @@ extension LCLCLI {
             var sigma_r = try ECDSA.sign(message: h_concat, privateKey: sk_t)
             let registration = RegistrationModel(sigmaR: sigma_r.hex, h: h_concat.hex, R: validationResult.R.hex)
             var registrationJson = try encoder.encode(registration)
+            
+            #if DEBUG
+            print(registration)
+            print(String(data: registrationJson, encoding: .utf8) ?? "Unable to decide regustration string")
+            #endif
+
             switch await NetworkingAPI.send(to: NetworkingAPI.Endpoint.register.url, using: registrationJson) {
             case .success:
                 print("Registration complete!")
@@ -97,6 +103,11 @@ extension LCLCLI {
             let privateKey = try ECDSA.deserializePrivateKey(raw: validationResult.skT)
             let signature = try ECDSA.sign(message: validationJson, privateKey: privateKey)
             
+            try FileIO.default.createIfAbsent(at: rURL, isDirectory: false)
+            try FileIO.default.createIfAbsent(at: skURL, isDirectory: false)
+            try FileIO.default.createIfAbsent(at: hpkrURL, isDirectory: false)
+            try FileIO.default.createIfAbsent(at: sigURL, isDirectory: false)
+
             try FileIO.default.write(data: validationResult.R, to: rURL)
             try FileIO.default.write(data: validationResult.hPKR, to: hpkrURL)
             try FileIO.default.write(data: validationResult.skT, to: skURL)

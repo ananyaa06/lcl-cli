@@ -16,6 +16,7 @@ import LCLPing
 import LCLAuth
 import Crypto
 import LCLSpeedtest
+import ANSITerminal
 
 extension LCLCLI {
     struct MeasureCommand: AsyncParsableCommand {
@@ -25,6 +26,9 @@ extension LCLCLI {
 
         @Option(name: .shortAndLong, help: "Show datapoint on SCN's public visualization. Your contribution will help others better understand our coverage.")
         var showData: Bool = false
+        
+        @Option(name: .shortAndLong, help: "The path to the configuration file that will be used to configure the measurement process")
+        var configurationFile: String?
 
         static let configuration = CommandConfiguration(
             commandName: "measure",
@@ -32,10 +36,19 @@ extension LCLCLI {
         )
 
         func run() async throws {
-            let encoder: JSONEncoder = JSONEncoder()
-            encoder.outputFormatting = .sortedKeys
-
-            // TODO: prompted picker if the location option is not set
+            var configuration: Configuration? = nil
+            if let configurationFile = configurationFile {
+                let configURL = URL(fileURLWithPath: configurationFile)
+                guard let configObject = try? Data(contentsOf: configURL) else {
+                    throw CLIError.invalidConfiguration("Corrupted config file.")
+                }
+                let decoder = JSONDecoder()
+                guard let config = try? decoder.decode(Configuration.self, from: configObject) else {
+                    throw CLIError.invalidConfiguration("Invalid config file format.")
+                }
+                configuration = config
+            }
+            
             var sites: [CellularSite]
             let result: Result<[CellularSite]?, CLIError> = await NetworkingAPI.get(from: NetworkingAPI.Endpoint.site.url)
             switch result {
@@ -48,9 +61,10 @@ extension LCLCLI {
                 } else {
                     throw CLIError.failedToLoadContent("No cellular site is available. Please check your internet connection or talk to the SCN administrator.")
                 }
-
             }
-            var picker = Picker<CellularSite>(title: "Choose the cellular site you are currently at.", options: sites)
+            
+            let encoder: JSONEncoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
 
             let homeURL = FileIO.default.home.appendingPathComponent(Constants.cliDirectory)
             let skURL = homeURL.appendingPathComponent("sk")
@@ -80,15 +94,38 @@ extension LCLCLI {
             let stopSignal = DispatchSource.makeSignalSource(signal: SIGINT, queue: .main)
             stopSignal.setEventHandler {
                 print("Exit from SCN Measurement Test")
+                cursorOn()
                 client.cancel()
+                print("Ping test cancelled")
                 speedTest.stop()
-                return
+                print("Speed test cancelled")
+                LCLCLI.MeasureCommand.exit()
             }
 
             stopSignal.resume()
+            
+            var selectedSite: CellularSite
 
-            guard let selectedSite = picker.pick() else {
-                throw CLIError.noCellularSiteSelected
+            if configuration == nil {
+                var picker = Picker<CellularSite>(title: "Choose the cellular site you are currently at.", options: sites)
+                guard let ss = picker.pick() else {
+                    throw CLIError.noCellularSiteSelected
+                }
+                selectedSite = ss
+            } else {
+                print("Using configuration \(configurationFile ?? "")")
+                #if DEBUG
+                print(configuration ?? "Empty configuration")
+                #endif
+                let siteMap = Dictionary(uniqueKeysWithValues: sites.map { ($0.name, $0) })
+                guard let cellSiteName = configuration?.cellSiteName else {
+                    throw CLIError.invalidConfiguration("Missing cellular site name.")
+                }
+                
+                guard let ss = siteMap[cellSiteName] else {
+                    throw CLIError.invalidConfiguration("Invalid cellular site name.")
+                }
+                selectedSite = ss
             }
 
             let deviceId = UUID().uuidString
@@ -126,6 +163,12 @@ extension LCLCLI {
                 let measurementReport = MeasurementReportModel(sigmaM: sig_m.hex, hPKR: hpkrData.hex, M: serialized.hex, showData: showData)
 
                 let reportToSent = try encoder.encode(measurementReport)
+                
+                #if DEBUG
+                print(measurementReport)
+                print(String(data: reportToSent, encoding: .utf8) ?? "Unable to convert data to string")
+                print("DONE")
+                #endif
                 let result = await NetworkingAPI.send(to: NetworkingAPI.Endpoint.report.url, using: reportToSent)
                 switch result {
                 case .success:

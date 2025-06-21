@@ -27,6 +27,7 @@ enum CLIError: Error {
     case contentCorrupted
     case failedToLoadContent(String)
     case noCellularSiteSelected
+    case invalidConfiguration(String)
 }
 
 extension CLIError: CustomStringConvertible {
@@ -60,6 +61,8 @@ extension CLIError: CustomStringConvertible {
             return "Cannot load content: \(string)"
         case .noCellularSiteSelected:
             return "No cellular site is selected."
+        case .invalidConfiguration(let reason):
+            return "Invalid configuration: \(reason)"
         }
     }
 }

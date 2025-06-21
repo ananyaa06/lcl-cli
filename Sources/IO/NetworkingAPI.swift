@@ -17,7 +17,7 @@ import FoundationNetworking
 
 struct NetworkingAPI {
 
-    private static var BASE_URL: String = "https://coverage.seattlecommunitynetwork.org/api"
+    private static var BASE_URL: String = "https://map.seattlecommunitynetwork.org/api"
     private static var MEDIA_TYPE: String = "application/json"
 
     static func send(to urlString: String, using payload: Data) async -> Result<Void, CLIError> {
