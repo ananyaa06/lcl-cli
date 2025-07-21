@@ -11,6 +11,6 @@
 //
 
 enum OutputFormat: String {
-    case json
-    case `default`
+  case json
+  case `default`
 }

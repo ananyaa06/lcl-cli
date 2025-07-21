@@ -13,5 +13,5 @@
 import Foundation
 
 struct Constants {
-    static let cliDirectory = ".lcl"
+  static let cliDirectory = ".lcl"
 }

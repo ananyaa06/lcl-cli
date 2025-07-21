@@ -14,37 +14,37 @@ import Foundation
 import SwiftyTextTable
 
 struct SpeedTestSummary: Encodable {
-    public let min: Double
-    public let max: Double
-    public let avg: Double
-    public let median: Double
-    public let stdDev: Double
-    public let jitter: Double
-    public let details: [SpeedTestElement] // in mbps
+  public let min: Double
+  public let max: Double
+  public let avg: Double
+  public let median: Double
+  public let stdDev: Double
+  public let jitter: Double
+  public let details: [SpeedTestElement]  // in mbps
 
-    public let latency: Double
-    public let latencyVariance: Double
-    public let retransmit: Double
+  public let latency: Double
+  public let latencyVariance: Double
+  public let retransmit: Double
 
-    public let totalCount: Int
+  public let totalCount: Int
 }
 
 struct SpeedTestElement: Encodable, Comparable {
-    static func < (lhs: SpeedTestElement, rhs: SpeedTestElement) -> Bool {
-        return lhs.speed < rhs.speed
-    }
+  static func < (lhs: SpeedTestElement, rhs: SpeedTestElement) -> Bool {
+    return lhs.speed < rhs.speed
+  }
 
-    public let seqNum: Int
-    public let speed: Double
-    public let unit: MeasurementUnit
+  public let seqNum: Int
+  public let speed: Double
+  public let unit: MeasurementUnit
 }
 
 extension SpeedTestElement: TextTableRepresentable {
-    public static var columnHeaders: [String] {
-        return ["Sequence #", "Speed"]
-    }
+  public static var columnHeaders: [String] {
+    return ["Sequence #", "Speed"]
+  }
 
-    public var tableValues: [CustomStringConvertible] {
-        return ["\(seqNum)", "\(speed.convertTo(from: .Mbps, to: unit).round(to: 2)) \(unit.string)"]
-    }
+  public var tableValues: [CustomStringConvertible] {
+    return ["\(seqNum)", "\(speed.convertTo(from: .Mbps, to: unit).round(to: 2)) \(unit.string)"]
+  }
 }

@@ -14,42 +14,42 @@ import Foundation
 
 extension Array where Element == SpeedTestElement {
 
-    /// Average of the given array of `PingResult`
-    var avg: Double {
-        if isEmpty {
-            return 0.0
-        }
-
-        let sum = reduce(0.0) { partialResult, measurementResult in
-            partialResult + measurementResult.speed
-        }
-
-        return sum / Double(count)
+  /// Average of the given array of `PingResult`
+  var avg: Double {
+    if isEmpty {
+      return 0.0
     }
 
-    /// Median of the given array of `PingResult`
-    var median: Double {
-        if isEmpty {
-            return 0
-        }
-
-        let sorted = sorted { $0 < $1 }
-        if count % 2 == 1 {
-            // odd
-            return sorted[count / 2].speed
-        } else {
-            // even - lower end will be returned
-            return sorted[count / 2 - 1].speed
-        }
-
+    let sum = reduce(0.0) { partialResult, measurementResult in
+      partialResult + measurementResult.speed
     }
 
-    /// Standard Deviation of the given array of `PingResult`
-    var stdDev: Double {
-        if isEmpty || count == 1 {
-            return 0.0
-        }
+    return sum / Double(count)
+  }
 
-        return sqrt(map { ($0.speed - avg) * ($0.speed - avg) }.reduce(0.0, +) / Double(count - 1))
+  /// Median of the given array of `PingResult`
+  var median: Double {
+    if isEmpty {
+      return 0
     }
+
+    let sorted = sorted { $0 < $1 }
+    if count % 2 == 1 {
+      // odd
+      return sorted[count / 2].speed
+    } else {
+      // even - lower end will be returned
+      return sorted[count / 2 - 1].speed
+    }
+
+  }
+
+  /// Standard Deviation of the given array of `PingResult`
+  var stdDev: Double {
+    if isEmpty || count == 1 {
+      return 0.0
+    }
+
+    return sqrt(map { ($0.speed - avg) * ($0.speed - avg) }.reduce(0.0, +) / Double(count - 1))
+  }
 }
