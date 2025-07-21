@@ -44,6 +44,19 @@ binary_name_prefix="lcl-cli-$release_tag-$arch"
 function build_for_linux() {
     local platform=$1
     local image_name="$image_name_prefix-$platform"
+    case "$platform" in
+        ubuntu)
+            tag="noble"
+            ;;
+        debian)
+            tag="bookworm"
+            ;;
+        *)
+            echo "Error: Unsupported platform: $platform"
+            exit 1
+            ;;
+    esac
+    local docker_image="swift:6.1.2-$tag"
 
     echo "arch: $arch"
     echo "platform: $platform"
@@ -51,16 +64,14 @@ function build_for_linux() {
     echo "binary_name: $binary_name_prefix-$platform"
     echo "directory: $(pwd)"
 
-    docker build -t "$image_name" -f "docker/build_$platform.dockerfile" .
     docker run --rm \
         -v "$(pwd)":/app \
         -v "$(pwd)/release":/app/release \
         -w /app \
-        "$image_name" \
-        bash -c "make build-release && strip .build/release/lcl && mv .build/release/lcl release/$binary_name_prefix-$platform"
+        "$docker_image" \
+        bash -c "swift build --static-swift-stdlib -c release && strip .build/release/lcl && mv .build/release/lcl release/$binary_name_prefix-$platform"
 
-    docker rmi -f "$image_name" || true
-
+    docker rmi -f "$docker_image" || true
     echo "Binary for $platform has been successfully built!"
 }
 
