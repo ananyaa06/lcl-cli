@@ -1,7 +1,7 @@
 // Inspired by https://www.polpiella.dev/how-to-make-an-interactive-picker-for-a-swift-command-line-tool/
 
-import Foundation
 import ANSITerminal
+import Foundation
 
 struct Picker<T: CustomStringConvertible> {
 
@@ -44,7 +44,9 @@ struct Picker<T: CustomStringConvertible> {
 
         self.state.offset = readCursorPos().row
         self.state.activeLine = readCursorPos().row
-        let pickerOptions = self.options.enumerated().map { PickerOption(value: $1, line: self.state.offset + $0) }
+        let pickerOptions = self.options.enumerated().map {
+            PickerOption(value: $1, line: self.state.offset + $0)
+        }
 
         draw(pickerOptions)
         moveDown()
@@ -75,10 +77,14 @@ struct Picker<T: CustomStringConvertible> {
     }
 
     private func draw(_ options: [PickerOption]) {
-        options.forEach { option in
+        for option in options {
             let isActive = self.state.activeLine == option.line
             write(text: isActive ? "●".lightGreen : "○".foreColor(250), at: (row: option.line, col: 1))
-            write(text: isActive ? String(describing: option.value) : String(describing: option.value).foreColor(250), at: (row: option.line, col: 3))
+            write(
+                text: isActive
+                    ? String(describing: option.value) : String(describing: option.value).foreColor(250),
+                at: (row: option.line, col: 3)
+            )
         }
     }
 

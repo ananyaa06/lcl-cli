@@ -10,11 +10,12 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-import Foundation
+import ANSITerminal
 import ArgumentParser
-import LCLPing
-import LCLAuth
 import Crypto
+import Foundation
+import LCLAuth
+import LCLPing
 import LCLSpeedtest
 
 extension LCLCLI {
@@ -23,8 +24,19 @@ extension LCLCLI {
         @Option(name: .long, help: "Specify the device name to which the data will be sent.")
         var deviceName: String?
 
-        @Option(name: .shortAndLong, help: "Show datapoint on SCN's public visualization. Your contribution will help others better understand our coverage.")
+        @Option(
+            name: .shortAndLong,
+            help:
+                "Show datapoint on SCN's public visualization. Your contribution will help others better understand our coverage."
+        )
         var showData: Bool = false
+
+        @Option(
+            name: .shortAndLong,
+            help:
+                "The path to the configuration file that will be used to configure the measurement process"
+        )
+        var configurationFile: String?
 
         static let configuration = CommandConfiguration(
             commandName: "measure",
@@ -32,12 +44,23 @@ extension LCLCLI {
         )
 
         func run() async throws {
-            let encoder: JSONEncoder = JSONEncoder()
-            encoder.outputFormatting = .sortedKeys
+            var configuration: Configuration? = nil
+            if let configurationFile = configurationFile {
+                let configURL = URL(fileURLWithPath: configurationFile)
+                guard let configObject = try? Data(contentsOf: configURL) else {
+                    throw CLIError.invalidConfiguration("Corrupted config file.")
+                }
+                let decoder = JSONDecoder()
+                guard let config = try? decoder.decode(Configuration.self, from: configObject) else {
+                    throw CLIError.invalidConfiguration("Invalid config file format.")
+                }
+                configuration = config
+            }
 
-            // TODO: prompted picker if the location option is not set
             var sites: [CellularSite]
-            let result: Result<[CellularSite]?, CLIError> = await NetworkingAPI.get(from: NetworkingAPI.Endpoint.site.url)
+            let result: Result<[CellularSite]?, CLIError> = await NetworkingAPI.get(
+                from: NetworkingAPI.Endpoint.site.url
+            )
             switch result {
             case .failure(let error):
 
@@ -46,11 +69,14 @@ extension LCLCLI {
                 if let s = cs {
                     sites = s
                 } else {
-                    throw CLIError.failedToLoadContent("No cellular site is available. Please check your internet connection or talk to the SCN administrator.")
+                    throw CLIError.failedToLoadContent(
+                        "No cellular site is available. Please check your internet connection or talk to the SCN administrator."
+                    )
                 }
-
             }
-            var picker = Picker<CellularSite>(title: "Choose the cellular site you are currently at.", options: sites)
+
+            let encoder: JSONEncoder = JSONEncoder()
+            encoder.outputFormatting = .sortedKeys
 
             let homeURL = FileIO.default.home.appendingPathComponent(Constants.cliDirectory)
             let skURL = homeURL.appendingPathComponent("sk")
@@ -62,15 +88,26 @@ extension LCLCLI {
             let sigData = try loadData(sigURL)
             let rData = try loadData(rURL)
             let hpkrData = try loadData(hpkrURL)
-            let validationResultJSON = try encoder.encode(ValidationResult(R: rData, skT: skData, hPKR: hpkrData))
+            let validationResultJSON = try encoder.encode(
+                ValidationResult(R: rData, skT: skData, hPKR: hpkrData)
+            )
 
             let ecPrivateKey = try ECDSA.deserializePrivateKey(raw: skData)
 
-            guard try ECDSA.verify(message: validationResultJSON, signature: sigData, publicKey: ecPrivateKey.publicKey) else {
+            guard
+                try ECDSA.verify(
+                    message: validationResultJSON,
+                    signature: sigData,
+                    publicKey: ecPrivateKey.publicKey
+                )
+            else {
                 throw CLIError.contentCorrupted
             }
 
-            let pingConfig = try ICMPPingClient.Configuration(endpoint: .ipv4("google.com", 0), deviceName: deviceName)
+            let pingConfig = try ICMPPingClient.Configuration(
+                endpoint: .ipv4("google.com", 0),
+                deviceName: deviceName
+            )
             let outputFormats: Set<OutputFormat> = [.default]
 
             let client = ICMPPingClient(configuration: pingConfig)
@@ -80,15 +117,41 @@ extension LCLCLI {
             let stopSignal = DispatchSource.makeSignalSource(signal: SIGINT, queue: .main)
             stopSignal.setEventHandler {
                 print("Exit from SCN Measurement Test")
+                cursorOn()
                 client.cancel()
+                print("Ping test cancelled")
                 speedTest.stop()
-                return
+                print("Speed test cancelled")
+                LCLCLI.MeasureCommand.exit()
             }
 
             stopSignal.resume()
 
-            guard let selectedSite = picker.pick() else {
-                throw CLIError.noCellularSiteSelected
+            var selectedSite: CellularSite
+
+            if configuration == nil {
+                var picker = Picker<CellularSite>(
+                    title: "Choose the cellular site you are currently at.",
+                    options: sites
+                )
+                guard let ss = picker.pick() else {
+                    throw CLIError.noCellularSiteSelected
+                }
+                selectedSite = ss
+            } else {
+                print("Using configuration \(configurationFile ?? "")")
+                #if DEBUG
+                print(configuration ?? "Empty configuration")
+                #endif
+                let siteMap = Dictionary(uniqueKeysWithValues: sites.map { ($0.name, $0) })
+                guard let cellSiteName = configuration?.cellSiteName else {
+                    throw CLIError.invalidConfiguration("Missing cellular site name.")
+                }
+
+                guard let ss = siteMap[cellSiteName] else {
+                    throw CLIError.invalidConfiguration("Invalid cellular site name.")
+                }
+                selectedSite = ss
             }
 
             let deviceId = UUID().uuidString
@@ -96,14 +159,35 @@ extension LCLCLI {
             let summary = try await client.start().get()
 
             let speedTestResults = try await speedTest.run(deviceName: deviceName)
-            let downloadMeasurement = computeLatencyAndRetransmission(speedTestResults.downloadTCPMeasurement, for: .download)
-            let uploadMeasurement = computeLatencyAndRetransmission(speedTestResults.uploadTCPMeasurement, for: .upload)
+            let downloadMeasurement = computeLatencyAndRetransmission(
+                speedTestResults.downloadTCPMeasurement,
+                for: .download
+            )
+            let uploadMeasurement = computeLatencyAndRetransmission(
+                speedTestResults.uploadTCPMeasurement,
+                for: .upload
+            )
 
-            let downloadSummary = prepareSpeedTestSummary(data: speedTestResults.downloadSpeed, tcpInfos: speedTestResults.downloadTCPMeasurement, for: .download, unit: .Mbps)
-            let uploadSummary = prepareSpeedTestSummary(data: speedTestResults.uploadSpeed, tcpInfos: speedTestResults.uploadTCPMeasurement, for: .upload, unit: .Mbps)
+            let downloadSummary = prepareSpeedTestSummary(
+                data: speedTestResults.downloadSpeed,
+                tcpInfos: speedTestResults.downloadTCPMeasurement,
+                for: .download,
+                unit: .Mbps
+            )
+            let uploadSummary = prepareSpeedTestSummary(
+                data: speedTestResults.uploadSpeed,
+                tcpInfos: speedTestResults.uploadTCPMeasurement,
+                for: .upload,
+                unit: .Mbps
+            )
 
             generatePingSummary(summary, for: .icmp, formats: outputFormats)
-            generateSpeedTestSummary(downloadSummary, kind: .download, formats: outputFormats, unit: .Mbps)
+            generateSpeedTestSummary(
+                downloadSummary,
+                kind: .download,
+                formats: outputFormats,
+                unit: .Mbps
+            )
             generateSpeedTestSummary(uploadSummary, kind: .upload, formats: outputFormats, unit: .Mbps)
 
             // MARK: Upload test results to the server
@@ -122,11 +206,28 @@ extension LCLCLI {
                     jitter: (downloadMeasurement.variance + uploadMeasurement.variance) / 2
                 )
                 let serialized = try encoder.encode(report)
-                let sig_m = try ECDSA.sign(message: serialized, privateKey: ECDSA.deserializePrivateKey(raw: skData))
-                let measurementReport = MeasurementReportModel(sigmaM: sig_m.hex, hPKR: hpkrData.hex, M: serialized.hex, showData: showData)
+                let sig_m = try ECDSA.sign(
+                    message: serialized,
+                    privateKey: ECDSA.deserializePrivateKey(raw: skData)
+                )
+                let measurementReport = MeasurementReportModel(
+                    sigmaM: sig_m.hex,
+                    hPKR: hpkrData.hex,
+                    M: serialized.hex,
+                    showData: showData
+                )
 
                 let reportToSent = try encoder.encode(measurementReport)
-                let result = await NetworkingAPI.send(to: NetworkingAPI.Endpoint.report.url, using: reportToSent)
+
+                #if DEBUG
+                print(measurementReport)
+                print(String(data: reportToSent, encoding: .utf8) ?? "Unable to convert data to string")
+                print("DONE")
+                #endif
+                let result = await NetworkingAPI.send(
+                    to: NetworkingAPI.Endpoint.report.url,
+                    using: reportToSent
+                )
                 switch result {
                 case .success:
                     print("Data reported successfully.")

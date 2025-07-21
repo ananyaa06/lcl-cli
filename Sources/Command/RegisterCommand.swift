@@ -10,25 +10,32 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-import Foundation
 import ArgumentParser
-import LCLAuth
 import Crypto
+import Foundation
+import LCLAuth
 
 extension LCLCLI {
     struct RegisterCommand: AsyncParsableCommand {
 
-        @Option(name: .shortAndLong, help: "Path to the SCN credential file given by the SCN administrator.")
+        @Option(
+            name: .shortAndLong,
+            help: "Path to the SCN credential file given by the SCN administrator."
+        )
         var filePath: String
 
-        static let configuration = CommandConfiguration(commandName: "register",
-                                                        abstract: "Register with SCN server to report test data.")
+        static let configuration = CommandConfiguration(
+            commandName: "register",
+            abstract: "Register with SCN server to report test data."
+        )
 
         func run() async throws {
-            guard let filePathURL = URL(string: filePath), let credentialCode = try FileIO.default.loadFrom(filePathURL) else {
+            guard let filePathURL = URL(string: filePath),
+                let credentialCode = try FileIO.default.loadFrom(filePathURL)
+            else {
                 throw CLIError.failedToReadFile("Fail to read content from path '\(filePath)'. Exit.")
             }
-            
+
             let homeURL = FileIO.default.home.appendingPathComponent(Constants.cliDirectory)
             let skURL = homeURL.appendingPathComponent("sk")
             let sigURL = homeURL.appendingPathComponent("sig")
@@ -38,15 +45,16 @@ extension LCLCLI {
 
             try FileIO.default.createIfAbsent(at: homeURL, isDirectory: true)
 
-            if FileIO.default.fileExists(skURL) ||
-                FileIO.default.fileExists(sigURL) ||
-                FileIO.default.fileExists(rURL) ||
-                FileIO.default.fileExists(hpkrURL) ||
-                FileIO.default.fileExists(keyURL) {
+            if FileIO.default.fileExists(skURL) || FileIO.default.fileExists(sigURL)
+                || FileIO.default.fileExists(rURL) || FileIO.default.fileExists(hpkrURL)
+                || FileIO.default.fileExists(keyURL)
+            {
                 // file is NOT empty
                 var response: String?
                 while true {
-                    print("You've already have data associated with SCN. Do you want to overwrite it? [yes\\N]")
+                    print(
+                        "You've already have data associated with SCN. Do you want to overwrite it? [yes\\N]"
+                    )
                     response = readLine()?.lowercased()
                     var shouldExit = false
                     switch response {
@@ -59,7 +67,7 @@ extension LCLCLI {
                         shouldExit = true
                     case "n":
                         print("Registration cancelled.")
-                        return
+                        LCLCLI.RegisterCommand.exit()
                     default:
                         ()
                     }
@@ -84,9 +92,25 @@ extension LCLCLI {
             outputData.append(h_sec)
             var h_concat = Data(outputData)
             var sigma_r = try ECDSA.sign(message: h_concat, privateKey: sk_t)
-            let registration = RegistrationModel(sigmaR: sigma_r.hex, h: h_concat.hex, R: validationResult.R.hex)
+            let registration = RegistrationModel(
+                sigmaR: sigma_r.hex,
+                h: h_concat.hex,
+                R: validationResult.R.hex
+            )
             var registrationJson = try encoder.encode(registration)
-            switch await NetworkingAPI.send(to: NetworkingAPI.Endpoint.register.url, using: registrationJson) {
+
+            #if DEBUG
+            print(registration)
+            print(
+                String(data: registrationJson, encoding: .utf8) ?? "Unable to decide regustration string"
+            )
+            #endif
+
+            switch await NetworkingAPI.send(
+                to: NetworkingAPI.Endpoint.register.url,
+                using: registrationJson
+            )
+            {
             case .success:
                 print("Registration complete!")
             case .failure(let error):
@@ -96,12 +120,17 @@ extension LCLCLI {
             let validationJson = try encoder.encode(validationResult)
             let privateKey = try ECDSA.deserializePrivateKey(raw: validationResult.skT)
             let signature = try ECDSA.sign(message: validationJson, privateKey: privateKey)
-            
+
+            try FileIO.default.createIfAbsent(at: rURL, isDirectory: false)
+            try FileIO.default.createIfAbsent(at: skURL, isDirectory: false)
+            try FileIO.default.createIfAbsent(at: hpkrURL, isDirectory: false)
+            try FileIO.default.createIfAbsent(at: sigURL, isDirectory: false)
+
             try FileIO.default.write(data: validationResult.R, to: rURL)
             try FileIO.default.write(data: validationResult.hPKR, to: hpkrURL)
             try FileIO.default.write(data: validationResult.skT, to: skURL)
             try FileIO.default.write(data: signature, to: sigURL)
-            
+
             // cleanup
             outputData.removeAll()
             h_concat.removeAll()

@@ -6,10 +6,10 @@ import PackageDescription
 let package = Package(
     name: "lcl-cli",
     platforms: [
-        .macOS(.v11)
+        .macOS(.v13)
     ],
     dependencies: [
-        .package(url: "https://github.com/Local-Connectivity-Lab/lcl-ping.git", from: "1.0.3"),
+        .package(url: "https://github.com/Local-Connectivity-Lab/lcl-ping.git", from: "1.0.4"),
         .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.2.3"),
         .package(url: "https://github.com/scottrhoyt/SwiftyTextTable.git", from: "0.9.0"),
         .package(url: "https://github.com/Local-Connectivity-Lab/lcl-auth.git", branch: "main"),
@@ -32,8 +32,9 @@ let package = Package(
                 .product(name: "NIOHTTP1", package: "swift-nio"),
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
                 .product(name: "LCLSpeedtest", package: "lcl-speedtest"),
-                .product(name: "ANSITerminal", package: "ANSITerminal")
+                .product(name: "ANSITerminal", package: "ANSITerminal"),
             ],
-            path: "Sources")
+            path: "Sources"
+        )
     ]
 )

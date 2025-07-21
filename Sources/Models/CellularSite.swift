@@ -51,22 +51,22 @@ extension CellularSite: Equatable {
 
 extension CellularSite: CustomStringConvertible {
     var description: String {
-        return "\(self.name): \(self.address)"
+        "\(self.name): \(self.address)"
     }
 }
 
 extension CellularSite: TextTableRepresentable {
     public static var columnHeaders: [String] {
-        return ["Name", "Latitude", "Longitude", "Status", "Address"]
+        ["Name", "Latitude", "Longitude", "Status", "Address"]
     }
 
     public var tableValues: [CustomStringConvertible] {
-        return [
+        [
             self.name,
             self.latitude,
             self.longitude,
             self.status.rawValue,
-            self.address
+            self.address,
         ]
     }
 }

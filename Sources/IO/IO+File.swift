@@ -30,16 +30,19 @@ class FileIO {
     }
 
     func loadFrom(_ url: URL) throws -> Data? {
-        return self.fileManager.contents(atPath: url.relativePath)
+        self.fileManager.contents(atPath: url.relativePath)
     }
 
     func fileExists(_ url: URL) -> Bool {
-        return self.fileManager.fileExists(atPath: url.relativePath)
+        self.fileManager.fileExists(atPath: url.relativePath)
     }
 
     func createIfAbsent(at name: URL, isDirectory: Bool) throws {
         if isDirectory {
-            try self.fileManager.createDirectory(atPath: name.relativePath, withIntermediateDirectories: true)
+            try self.fileManager.createDirectory(
+                atPath: name.relativePath,
+                withIntermediateDirectories: true
+            )
         } else {
             // file
             self.fileManager.createFile(atPath: name.relativePath, contents: nil)

@@ -59,7 +59,9 @@ private func generateSummaryInJSON(summary: Encodable) {
 private func generatePingSummaryDefault(pingSummary: PingSummary, type: LCLPing.PingType) {
     print("====== Ping Result ======")
     let protocolType = ProtocolType(rawValue: pingSummary.protocol)
-    print("Host: \(pingSummary.ipAddress):\(pingSummary.port) [\(protocolType?.string ?? "Unknown Protocol")]")
+    print(
+        "Host: \(pingSummary.ipAddress):\(pingSummary.port) [\(protocolType?.string ?? "Unknown Protocol")]"
+    )
     print("Total Count: \(pingSummary.totalCount)")
 
     print("====== Details ======")

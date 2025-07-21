@@ -10,8 +10,8 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
-import Foundation
 import ArgumentParser
+import Foundation
 
 extension LCLCLI {
     struct CelluarSiteCommand: AsyncParsableCommand {
@@ -20,8 +20,9 @@ extension LCLCLI {
             abstract: "Get info on SCN cellular sites"
         )
         func run() async throws {
-            let result: Result<[CellularSite]?, CLIError> = await NetworkingAPI
-                                                                .get(from: NetworkingAPI.Endpoint.site.url)
+            let result: Result<[CellularSite]?, CLIError> =
+                await NetworkingAPI
+                .get(from: NetworkingAPI.Endpoint.site.url)
             switch result {
             case .failure(let error):
                 throw error

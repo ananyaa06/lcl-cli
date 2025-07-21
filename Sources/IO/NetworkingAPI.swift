@@ -11,13 +11,14 @@
 //
 
 import Foundation
+
 #if os(Linux)
 import FoundationNetworking
 #endif
 
 struct NetworkingAPI {
 
-    private static var BASE_URL: String = "https://coverage.seattlecommunitynetwork.org/api"
+    private static var BASE_URL: String = "https://map.seattlecommunitynetwork.org/api"
     private static var MEDIA_TYPE: String = "application/json"
 
     static func send(to urlString: String, using payload: Data) async -> Result<Void, CLIError> {
@@ -80,7 +81,7 @@ struct NetworkingAPI {
     }
 
     static func get(from url: URL) async throws -> Data? {
-        return try await withCheckedThrowingContinuation { continuation in
+        try await withCheckedThrowingContinuation { continuation in
             URLSession.shared.dataTask(with: url) { data, response, error in
                 if error != nil {
                     continuation.resume(with: .failure(CLIError.fetchError(error)))
@@ -109,7 +110,7 @@ extension NetworkingAPI {
         case site = "/sites"
 
         var url: String {
-            return NetworkingAPI.BASE_URL + self.rawValue
+            NetworkingAPI.BASE_URL + self.rawValue
         }
     }
 }

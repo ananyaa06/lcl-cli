@@ -19,7 +19,7 @@ enum ProtocolType: CInt {
 
     var string: String {
         switch self {
-        case.unix:
+        case .unix:
             return "Unix Domain Socket"
         case .v4:
             return "IPv4"

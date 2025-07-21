@@ -10,9 +10,9 @@
 // SPDX-License-Identifier: Apache-2.0
 //
 
+import ANSITerminal
 import Foundation
 import LCLPing
-import ANSITerminal
 
 func matchLatencyWithColor(_ latency: Double) -> String {
     let latencyString = "\(latency.round(to: 2))"

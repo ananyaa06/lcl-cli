@@ -11,15 +11,15 @@
 //
 
 import ArgumentParser
-import LCLPing
-import Foundation
 import Dispatch
+import Foundation
 import LCLAuth
+import LCLPing
 
 #if canImport(Darwin)
-import Darwin   // Apple platforms
+import Darwin  // Apple platforms
 #elseif canImport(Glibc)
-import Glibc    // GlibC Linux platforms
+import Glibc  // GlibC Linux platforms
 #endif
 
 @main
@@ -33,7 +33,7 @@ struct LCLCLI: AsyncParsableCommand {
             SpeedTestCommand.self,
             MeasureCommand.self,
             NetworkInterfaceCommand.self,
-            CelluarSiteCommand.self
+            CelluarSiteCommand.self,
         ]
     )
 }

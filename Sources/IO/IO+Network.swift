@@ -15,7 +15,7 @@ import NIOCore
 
 internal func getAvailableInterfaces() throws -> [String: Set<String>] {
     var res = [String: Set<String>]()
-    
+
     for device in try System.enumerateDevices() {
         let name = device.name
         if !res.keys.contains(name) {
@@ -26,6 +26,6 @@ internal func getAvailableInterfaces() throws -> [String: Set<String>] {
         }
         res[name]?.insert(addr)
     }
-    
+
     return res
 }

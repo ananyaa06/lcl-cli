@@ -40,7 +40,7 @@ extension Double {
 
     /**
      Round the double number to given decimal digits
-     
+
      - Precondition: digit has to be >= 0
      - Parameters:
         - to: the number of decimal digits to round to

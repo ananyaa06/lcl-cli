@@ -27,6 +27,7 @@ enum CLIError: Error {
     case contentCorrupted
     case failedToLoadContent(String)
     case noCellularSiteSelected
+    case invalidConfiguration(String)
 }
 
 extension CLIError: CustomStringConvertible {
@@ -53,13 +54,16 @@ extension CLIError: CustomStringConvertible {
         case .decodingError:
             return "Cannot decode data."
         case .failedToRegister(let error):
-            return "Cannot register your QRCode information with SCN. Please contact your SCN administrator. \(String(describing: error))"
+            return
+                "Cannot register your QRCode information with SCN. Please contact your SCN administrator. \(String(describing: error))"
         case .contentCorrupted:
             return "Content is corrupted."
         case .failedToLoadContent(let string):
             return "Cannot load content: \(string)"
         case .noCellularSiteSelected:
             return "No cellular site is selected."
+        case .invalidConfiguration(let reason):
+            return "Invalid configuration: \(reason)"
         }
     }
 }

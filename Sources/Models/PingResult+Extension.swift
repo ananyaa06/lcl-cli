@@ -16,10 +16,12 @@ import SwiftyTextTable
 
 extension PingResult: TextTableRepresentable {
     public static var columnHeaders: [String] {
-        return ["Sequence #", "Latency(ms)", "Timestamp"]
+        ["Sequence #", "Latency(ms)", "Timestamp"]
     }
 
     public var tableValues: [CustomStringConvertible] {
-        return ["#\(seqNum)", matchLatencyWithColor(latency), Date.toDateString(timeInterval: timestamp)]
+        [
+            "#\(seqNum)", matchLatencyWithColor(latency), Date.toDateString(timeInterval: timestamp),
+        ]
     }
 }
