@@ -14,18 +14,18 @@ import Foundation
 import NIOCore
 
 internal func getAvailableInterfaces() throws -> [String: Set<String>] {
-  var res = [String: Set<String>]()
+    var res = [String: Set<String>]()
 
-  for device in try System.enumerateDevices() {
-    let name = device.name
-    if !res.keys.contains(name) {
-      res[name] = Set()
+    for device in try System.enumerateDevices() {
+        let name = device.name
+        if !res.keys.contains(name) {
+            res[name] = Set()
+        }
+        guard let addr = device.address?.ipAddress else {
+            continue
+        }
+        res[name]?.insert(addr)
     }
-    guard let addr = device.address?.ipAddress else {
-      continue
-    }
-    res[name]?.insert(addr)
-  }
 
-  return res
+    return res
 }

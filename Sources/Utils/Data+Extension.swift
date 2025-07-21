@@ -14,8 +14,8 @@ import Foundation
 
 extension Data {
 
-  /// The hex String representation of the given `Data`
-  var hex: String {
-    reduce("") { $0 + String(format: "%02hhx", $1) }
-  }
+    /// The hex String representation of the given `Data`
+    var hex: String {
+        reduce("") { $0 + String(format: "%02hhx", $1) }
+    }
 }

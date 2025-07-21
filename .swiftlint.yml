@@ -1,7 +1,0 @@
-included:
-  - Sources
-excluded:
-  - .build
-  - .swiftpm
-  - .vscode
-  - .git

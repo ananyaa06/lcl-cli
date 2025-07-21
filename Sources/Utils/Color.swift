@@ -15,13 +15,13 @@ import Foundation
 import LCLPing
 
 func matchLatencyWithColor(_ latency: Double) -> String {
-  let latencyString = "\(latency.round(to: 2))"
-  switch latency {
-  case 0..<200:
-    return latencyString.asGreen
-  case 200..<500:
-    return latencyString.asYellow
-  default:
-    return latencyString.asRed
-  }
+    let latencyString = "\(latency.round(to: 2))"
+    switch latency {
+    case 0..<200:
+        return latencyString.asGreen
+    case 200..<500:
+        return latencyString.asYellow
+    default:
+        return latencyString.asRed
+    }
 }
