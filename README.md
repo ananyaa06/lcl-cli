@@ -7,19 +7,35 @@
 LCL CLI is a cross-platform cli tool written in Swift. It is designed to measure the network performance and latency through LCL's cellular network measurement testbed. While this tool is design for Local Connectivity Lab researchers and Seattle Community Network volunteers and users, everyone is welcome to use this tool to measure their network performance.
 
 ## Build
+
+### Dev version
+To contribute to the tool, make sure you have docker installed.
+
+Run
+```
+make dev
+```
+to drop into the toolchain coontainer, which includes all the dependencies required by the tool.
+To build the _debug_ version, simply run `swift build` or `make build-test`. The debug binary will be placed under `.build/debug` directory.
+
 ### Release version
 To build the release version of the tool, make sure you have docker installed. 
 
 On Linux, make sure the systemd service is running.
 Then run:
 
-```sudo  ./scripts/build_release.sh ubuntu ``` 
+```
+./scripts/build_release.sh ubuntu 
+``` 
 
 (or debian or macos, depending on your system).
 
 When the build is complete, go into the "release" folder and run the executable as instructed. For example:
 
-```./lcl-cli-1.0.4-x86_64-ubuntu``` will print out the help text for arguments that can be added.
+```
+./lcl-cli-1.0.4-x86_64-ubuntu
+``` 
+will print out the help text for arguments that can be added.
 
 ## Usage
 
